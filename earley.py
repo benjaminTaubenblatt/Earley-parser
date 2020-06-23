@@ -61,7 +61,7 @@ class EarleyParser:
 
 
     def scanner(self, state: State, k: int, words: List[str]) -> None:
-        if words[k] in self.grammar[state.rule.lhs]:
+        if words[k] in self.grammar[state.rule.rhs[state.dot]]:
             # if input at pos k subset of POS for current terminal in rule
             self.chart.append([])
             self.chart[k + 1].append(
@@ -84,14 +84,25 @@ class EarleyParser:
                     if state.rule.rhs[state.dot] not in terminals:
                         # non-terminal
                         self.predictor(state, k)
-                        # self.print_chart()
+                        print("predictor")
+                        self.print_chart()
+                        print()
                     else:
                         # terminal
                         self.scanner(state, k, words)
+                        print("scanner")
+                        self.print_chart()
+                        print()
+                        return
                 else:
                     # completer
                     pass
         return self.chart
+
+"""
+TODO: 
+    1. check repeats in chart
+"""
 
 
 grammar = {
