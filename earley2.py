@@ -10,7 +10,6 @@ class State:
         self.operation = operation
 
     def next_category(self) -> str:
-        print(self.rule, self.position[0], self.position[1])
         return self.rule.rhs[self.position[1] - self.position[0]]
 
     def __str__(self) -> str:
@@ -51,6 +50,7 @@ class EarleyParser:
         for i in range(len(self.chart)):
             for j in range(len(self.chart[i])):
                 print(f"row={i}, column={j}, state={self.chart[i][j]}")
+            print()
 
     def generate_sid(self) -> Iterator[str]:
         n = 0
@@ -88,7 +88,7 @@ class EarleyParser:
         j = state.position[0]
         k = state.position[1]
         for st in self.chart[j]:
-            if st.position[1] == state.position[0] and self.incomplete(st):
+            if self.incomplete(st):
                 if st.next_category() == state.rule.lhs:
                     i = state.position[0]
                     self.enqueue(State(sid=next(self.sid_gen),
