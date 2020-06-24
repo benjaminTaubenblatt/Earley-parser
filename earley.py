@@ -12,8 +12,8 @@ class State:
 
     def __str__(self):
         return (
-            f"sid={self.sid}, rule={self.rule}, origin={self.origin}, "
-            f"dot={self.dot}, children={self.children}, operation={self.operation}"
+            f"State(sid={self.sid}, rule={self.rule}, origin={self.origin}, "
+            f"dot={self.dot}, children={self.children}, operation={self.operation})"
         )
 
 
@@ -32,13 +32,12 @@ class EarleyParser:
         self.grammar = grammar
         self.terminals = terminals
         self.sid_gen = self.generate_sid()
+        self.seen = set()
 
     def print_chart(self) -> None:
         for i in range(len(self.chart)):
             for j in range(len(self.chart[i])):
-                print(
-                    f"row={i}, column={j}, state=State({str(self.chart[i][j])})"
-                )
+                print(f"row={i}, column={j}, state={self.chart[i][j]}")
 
     def generate_sid(self) -> Iterator[str]:
         n = 0
@@ -47,7 +46,8 @@ class EarleyParser:
             n += 1
 
     def is_finished(self, state: State, words: List[str]) -> bool:
-        return state.dot == len(words)
+        return state.dot == len(
+            state.rule.rhs) or state.rule.lhs in self.terminals
 
     def predictor(self, state: State, k: int) -> None:
         B = state.rule.rhs[state.dot]
@@ -58,6 +58,17 @@ class EarleyParser:
                       origin=state.origin,
                       dot=state.dot,
                       operation="predictor"))
+
+    def has_seen(self, state: State) -> bool:
+        print(state.rule.lhs, state.rule.rhs, state.origin, state.dot)
+        if state.rule.lhs not in self.terminals and state.dot != len(state.rule.rhs):
+            return (state.rule.rhs[state.dot], state.origin,
+                    state.dot) in self.seen
+        return False
+
+    def add_seen(self, state: State) -> None:
+        if state.rule.lhs not in self.terminals:
+            self.seen.add((state.rule.rhs[state.dot], state.origin, state.dot))
 
     def scanner(self, state: State, k: int, words: List[str]) -> None:
         if words[k] in self.grammar[state.rule.rhs[state.dot]]:
@@ -73,16 +84,16 @@ class EarleyParser:
 
     def completer(self, state: State, k: int) -> None:
         for st in self.chart[state.origin]:
-            self.chart[k].append(
-                State(sid=next(self.sid_gen),
-                      rule=Rule(lhs=st.rule.lhs, rhs=st.rule.rhs),
-                      origin=st.origin,
-                      dot=st.dot + 1,
-                      children=[state],
-                      operation="completer"))
+            if st.rule.rhs[st.dot] == state.rule.lhs:
+                self.chart[k].append(
+                    State(sid=next(self.sid_gen),
+                          rule=Rule(lhs=st.rule.lhs, rhs=st.rule.rhs),
+                          origin=st.origin,
+                          dot=st.dot + 1,
+                          children=st.children + [state.sid],
+                          operation="completer"))
 
     def parse(self, words: List[str]) -> List[List[State]]:
-        seen = set()
         self.chart[0].append(
             State(sid=next(self.sid_gen),
                   rule=Rule('GAMMA', ['S']),
@@ -91,26 +102,28 @@ class EarleyParser:
                   operation="seed"))
         for k in range(len(words)):
             for state in self.chart[k]:
-                if not self.is_finished(state, words) and state.rule.rhs[
-                        state.dot] not in seen:
-                    if state.rule.rhs[state.dot] not in terminals:
-                        # non-terminal
-                        self.predictor(state, k)
-                        print("predictor")
-                        self.print_chart()
-                        print()
+                print(state, k)
+                if not self.has_seen(state):
+                    if not self.is_finished(state, words):
+                        if state.rule.rhs[state.dot] not in self.terminals:
+                            # non-terminal
+                            self.predictor(state, k)
+                            print("predictor")
+                            self.print_chart()
+                            print()
+                        else:
+                            # terminal
+                            self.scanner(state, k, words)
+                            print("scanner")
+                            self.print_chart()
+                            print()
+                        self.add_seen(state)
                     else:
-                        # terminal
-                        self.scanner(state, k, words)
-                        print("scanner")
+                        # completer
+                        self.completer(state, k)
+                        print("completer")
                         self.print_chart()
-                        print()
-                    seen.add(state.rule.rhs[state.dot])
-                else:
-                    # completer
-                    self.completer(state, k)
-                    print("completer")
-                    self.print_chart()
+                        # return
         return self.chart
 
 
