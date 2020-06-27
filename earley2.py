@@ -95,26 +95,20 @@ class EarleyParser:
                                position=[j, j + 1],
                                operation="scanner"), j + 1)
 
-    def completer(self, state: State) -> None:
+    def completer(self, state: State, end_idx) -> None:
         j = state.position[0]
         k = state.position[1]
         for st in self.chart[j]:
-            if not st.complete():
-                print(f"HELLO: {st}\n{state}\n")
-                if st.next_category() == state.rule.lhs and st.position[1] == j and st.rule.lhs != 'GAMMA':
+            if (not st.complete() and 
+                    st.next_category() == state.rule.lhs and
+                    st.position[1] == j and st.rule.lhs != 'GAMMA' and
+                    len(st.rule.rhs) + st.position[1] <= end_idx + 1):
                     i = st.position[0]
                     self.enqueue(State(rule=Rule(lhs=st.rule.lhs, rhs=st.rule.rhs),
                                        dot_idx=st.dot_idx + 1,
                                        position=[i, k],
                                        pointers=st.pointers + [state.sid],
                                        operation="completer"), k)
-                # elif st.rule.lhs == state.rule.lhs and st.position[1] == j:
-                    # i = st.position[0]
-                    # self.enqueue(State(rule=Rule(lhs=st.rule.lhs, rhs=st.rule.rhs),
-                                       # dot_idx=st.dot_idx + 1,
-                                       # position=[i, k],
-                                       # pointers=st.pointers + [state.sid],
-                                       # operation="completer"), k)
 
     def parse(self, words: List[str]) -> List[List[State]]:
         self.init_chart(words)
@@ -128,19 +122,19 @@ class EarleyParser:
                 if not state.complete() and state.next_category() not in self.terminals:
                         # non-terminal
                         self.predictor(state)
-                        print(f"PREDICTOR: {str(state)}")
+                        print(f"PREDICTOR: {state}")
                         self.print_chart()
                         print()
                 elif not state.complete() and state.next_category() in self.terminals and k != len(words):
                     # terminal
                     self.scanner(state, words)
-                    print(f"SCANNER: {str(state)}")
+                    print(f"SCANNER: {state}")
                     self.print_chart()
                     print()
-                else:
+                else: 
                     # completer
-                    self.completer(state)
-                    print(f"COMPLETER: {str(state)}")
+                    self.completer(state, len(words))
+                    print(f"COMPLETER: {state}")
                     self.print_chart()
                     # return
         # self.print_chart()
