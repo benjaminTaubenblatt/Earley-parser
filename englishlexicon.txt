@@ -1,0 +1,7 @@
+Det -> that | this | a
+Noun -> book | flight | meal | money
+Verb -> book | include | prefer
+Pronoun -> I | she | me
+Proper-Noun -> Houston | NWA
+Aux -> does
+Preposition -> with | from | to | on | near | through

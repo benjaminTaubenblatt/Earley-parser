@@ -30,8 +30,8 @@ class State:
 
     def __eq__(self, other: 'State') -> bool:
         return (self.rule == other.rule and 
-                self.position == other.position and
-                self.pointers == other.pointers)
+                self.position == other.position and self.dot_idx == other.dot_idx) # and
+                # self.pointers == other.pointers)
 
 
 class Rule:
@@ -181,20 +181,33 @@ TODO:
 
 """
 
-grammar = {
-    'S': [['NP', 'VP']],
-    'PP': [['P', 'NP']],
-    'VP': [['V', 'NP'], ['VP', 'PP']],
-    'NP': [['NP', 'PP'], ['N']],
-    'N': ['astronomers', 'ears', 'stars', 'telescopes'],
-    'V': ['saw'],
-    'P': ['with']
-}
-terminals = {'N', 'V', 'P'}
+# grammar = {
+    # 'S': [['NP', 'VP']],
+    # 'PP': [['P', 'NP']],
+    # 'VP': [['V', 'NP'], ['VP', 'PP']],
+    # 'NP': [['NP', 'PP'], ['N']],
+    # 'N': ['astronomers', 'ears', 'stars', 'telescopes'],
+    # 'V': ['saw'],
+    # 'P': ['with']
+# }
+# terminals = {'N', 'V', 'P'}
 
-words = ['astronomers', 'saw', 'stars', 'with', 'ears']
-earley = EarleyParser(grammar, terminals)
-earley.parse(words)
+# words = ['astronomers', 'saw', 'stars', 'with', 'ears']
+
+from grammars import CFG
+
+cfg = CFG()
+cfg.init_grammar('englishcfg.txt', 'englishlexicon.txt')
+earley = EarleyParser(cfg.grammar, cfg.terminals)
+earley.parse(['book', 'a', 'flight', 'with', 'me'])
+import json
+print(json.dumps(cfg.grammar, indent=2))
+print()
+print(cfg.terminals)
+
+
+# earley = EarleyParser(grammar, terminals)
+# earley.parse(words)
 forest = earley.forest()
 for tree, jsn in forest:
     print("".join(tree))
