@@ -1,14 +1,16 @@
 S -> NP VP
-S -> Aux NP VP
 S -> VP
 NP -> Pronoun
 NP -> Proper-Noun
-NP -> Det Nominal 
-Nominal -> Noun
-Nominal -> Noun Nominal 
+NP -> Aux NP 
+NP -> Det N'
+NP -> N'
+NP -> N' PP
+N' -> Noun
+N' -> Adj N' 
 VP -> Verb
 VP -> Verb NP
-VP -> Verb NP PP
 VP -> Verb PP
 VP -> VP PP
+VP -> Aux VP
 PP -> Preposition NP

@@ -1,43 +1,68 @@
 from typing import List, Iterator
-
+import json
 
 class State:
-    def __init__(self, sid, rule, origin, dot, children=[], operation=""):
-        self.sid = sid
+    def __init__(self, rule, dot_idx, position, pointers=[], operation="") -> None:
+        self.sid = None 
         self.rule = rule
-        self.origin = origin
-        self.dot = dot
-        self.children = children
+        self.dot_idx = dot_idx
+        self.position = position 
+        self.pointers = pointers
         self.operation = operation
+    
 
-    def __str__(self):
+    def complete(self) -> bool:
+        # return (self.position[0] + len(self.rule.rhs)) == self.position[1]
+        return self.dot_idx == len(self.rule.rhs) 
+    
+    def next_category(self) -> str:
+        # rule_idx = self.position[1] - self.position[0]
+        # if rule_idx < len(self.rule.rhs):
+            # return self.rule.rhs[rule_idx]
+        # return "" 
+        return self.rule.rhs[self.dot_idx]
+
+    def __str__(self) -> str:
         return (
-            f"State(sid={self.sid}, rule={self.rule}, origin={self.origin}, "
-            f"dot={self.dot}, children={self.children}, operation={self.operation})"
+            f"sid={self.sid}, rule={self.rule}, dot_idx={self.dot_idx}, "
+            f"position={self.position}, pointers={list(map(lambda s: s.sid, self.pointers))}, operation={self.operation}"
         )
+
+    def __eq__(self, other: 'State') -> bool:
+        return (self.rule == other.rule and 
+                self.position == other.position and
+                self.pointers == other.pointers)
 
 
 class Rule:
-    def __init__(self, lhs, rhs):
+    def __init__(self, lhs, rhs) -> None:
         self.lhs = lhs
         self.rhs = rhs
 
-    def __str__(self):
-        return f"Rule(lhs={self.lhs}, rhs={self.rhs})"
+    def __str__(self) -> str:
+        return f"{self.lhs} -> {' '.join(self.rhs)}"
+
+    def __eq__(self, other: 'Rule') -> bool:
+        return self.lhs == other.lhs and self.rhs == other.rhs
 
 
 class EarleyParser:
-    def __init__(self, grammar, terminals):
-        self.chart = [[]]
+    def __init__(self, grammar, terminals) -> None:
+        self.chart = []
         self.grammar = grammar
         self.terminals = terminals
         self.sid_gen = self.generate_sid()
-        self.seen = set()
+
+    def init_chart(self, words: List[str]) -> None:
+        for _ in range(len(words) + 1):
+            self.chart.append([])
 
     def print_chart(self) -> None:
         for i in range(len(self.chart)):
+            print(f"----- CHART[{i}] -----")
             for j in range(len(self.chart[i])):
-                print(f"row={i}, column={j}, state={self.chart[i][j]}")
+                print(f"{self.chart[i][j]}")
+            print()
 
     def generate_sid(self) -> Iterator[str]:
         n = 0
@@ -45,104 +70,137 @@ class EarleyParser:
             yield f"S{n}"
             n += 1
 
-    def is_finished(self, state: State, words: List[str]) -> bool:
-        return state.dot == len(
-            state.rule.rhs) or state.rule.lhs in self.terminals
 
-    def predictor(self, state: State, k: int) -> None:
-        B = state.rule.rhs[state.dot]
-        for rhs in self.grammar[B]:
-            self.chart[k].append(
-                State(sid=next(self.sid_gen),
-                      rule=Rule(lhs=B, rhs=rhs),
-                      origin=state.origin,
-                      dot=state.dot,
-                      operation="predictor"))
+    def enqueue(self, state: State, k: int) -> None:
+        if state not in self.chart[k]:
+            state.sid = next(self.sid_gen)
+            self.chart[k].append(state)
 
-    def has_seen(self, state: State) -> bool:
-        print(state.rule.lhs, state.rule.rhs, state.origin, state.dot)
-        if state.rule.lhs not in self.terminals and state.dot != len(state.rule.rhs):
-            return (state.rule.rhs[state.dot], state.origin,
-                    state.dot) in self.seen
-        return False
+    def predictor(self, state: State) -> None:
+        B = state.next_category()
+        j = state.position[1]
+        for rhs in self.grammar.get(B, [] ): # TODO: change next category to not display "" and remove this
+            self.enqueue(State(rule=Rule(lhs=B, rhs=rhs),
+                               dot_idx=0,
+                               position=[j, j],
+                               operation="predictor"), j)
 
-    def add_seen(self, state: State) -> None:
-        if state.rule.lhs not in self.terminals:
-            self.seen.add((state.rule.rhs[state.dot], state.origin, state.dot))
-
-    def scanner(self, state: State, k: int, words: List[str]) -> None:
-        if words[k] in self.grammar[state.rule.rhs[state.dot]]:
+    def scanner(self, state: State, words: List[str]) -> None:
+        B = state.next_category()
+        j = state.position[1]
+        if words[j] in self.grammar.get(B, []): # TODO: if word not in grammar?
             # if input at pos k subset of POS for current terminal in rule
-            self.chart.append([])
-            self.chart[k + 1].append(
-                State(sid=next(self.sid_gen),
-                      rule=Rule(lhs=state.rule.rhs[state.dot], rhs=words[k]),
-                      origin=state.origin,
-                      dot=state.dot + 1,
-                      children=state.children,
-                      operation="scanner"))
+            self.enqueue(State(rule=Rule(lhs=B, rhs=[words[j]]),
+                               dot_idx=1,
+                               position=[j, j + 1],
+                               operation="scanner"), j + 1)
+    
+    def completer(self, state: State, end_idx: int) -> None:
+        j = state.position[0]
+        k = state.position[1]
+        print(f"END INDEX: {end_idx}")
+        for st in self.chart[j]:
+            if (not st.complete() and 
+                    st.next_category() == state.rule.lhs and
+                    st.position[1] == j and st.rule.lhs != 'GAMMA' and
+                    len(state.rule.rhs) + st.position[1] <= end_idx):
+                    i = st.position[0]
+                    self.enqueue(State(rule=Rule(lhs=st.rule.lhs, rhs=st.rule.rhs),
+                                       dot_idx=st.dot_idx + 1,
+                                       position=[i, k],
+                                       pointers=st.pointers + [state],
+                                       operation="completer"), k)
 
-    def completer(self, state: State, k: int) -> None:
-        for st in self.chart[state.origin]:
-            if st.rule.rhs[st.dot] == state.rule.lhs:
-                self.chart[k].append(
-                    State(sid=next(self.sid_gen),
-                          rule=Rule(lhs=st.rule.lhs, rhs=st.rule.rhs),
-                          origin=st.origin,
-                          dot=st.dot + 1,
-                          children=st.children + [state.sid],
-                          operation="completer"))
-
-    def parse(self, words: List[str]) -> List[List[State]]:
-        self.chart[0].append(
-            State(sid=next(self.sid_gen),
-                  rule=Rule('GAMMA', ['S']),
-                  origin=0,
-                  dot=0,
-                  operation="seed"))
-        for k in range(len(words)):
+    def parse(self, words: List[str]) -> None:
+        self.init_chart(words)
+        self.enqueue(State(rule=Rule('GAMMA', ['S']),
+                           dot_idx=0,
+                           position=[0, 0],
+                           operation="seed"), 0)
+        for k in range(len(words) + 1):
+            print(k)
             for state in self.chart[k]:
-                print(state, k)
-                if not self.has_seen(state):
-                    if not self.is_finished(state, words):
-                        if state.rule.rhs[state.dot] not in self.terminals:
-                            # non-terminal
-                            self.predictor(state, k)
-                            print("predictor")
-                            self.print_chart()
-                            print()
-                        else:
-                            # terminal
-                            self.scanner(state, k, words)
-                            print("scanner")
-                            self.print_chart()
-                            print()
-                        self.add_seen(state)
-                    else:
-                        # completer
-                        self.completer(state, k)
-                        print("completer")
+                if not state.complete() and state.next_category() not in self.terminals: # non-terminal
+                        self.predictor(state)
+                        print(f"PREDICTOR: {state}")
                         self.print_chart()
-                        # return
-        return self.chart
+                        print()
+                elif not state.complete() and state.next_category() in self.terminals and k != len(words):
+                    # terminal
+                    self.scanner(state, words)
+                    print(f"SCANNER: {state}")
+                    self.print_chart()
+                    print()
+                else: 
+                    # completer
+                    self.completer(state, len(words))
+                    print(f"COMPLETER: {state}")
+                    self.print_chart()
+                    # return
+
+    def forest(self):
+        def find_children(state, current_tree, current_json):
+            current_tree.extend(['[ ', '.', state.rule.lhs])
+            current_json[state.rule.lhs] = {}
+            if state.rule.lhs in self.terminals:
+                current_tree.extend(['[ ', '.', state.rule.rhs[0], ' ]'])
+                current_json[state.rule.lhs] = state.rule.rhs[0]
+            else:
+                for child in state.pointers:
+                    #child = find_child(sid) 
+                    find_children(child, current_tree, current_json[state.rule.lhs])
+                    current_tree.append(' ]')
+            
+        parse_forest = []
+        for st in self.chart[-1]:
+            if st.rule.lhs == 'S':
+                current_tree = []
+                current_json = {} 
+                find_children(st, current_tree, current_json)
+                parse_forest.append((current_tree, current_json))
+        return parse_forest
+
+
+
 
 
 """
 TODO: 
-    1. check repeats in chart
+    1. debug completor, dot rules, complete method, next category
+    2. improve parse forest retrieval 
+        a. multiple parses on same 'S' in last entry of chart?
+
 """
 
-grammar = {
-    'S': [['NP', 'VP']],
-    'PP': [['P', 'NP']],
-    'VP': [['V', 'NP'], ['VP', 'PP']],
-    'NP': [['NP', 'PP'], ['N']],
-    'N': ['astronomers', 'ears', 'stars', 'telescopes'],
-    'V': ['saw'],
-    'P': ['with']
-}
-terminals = {'N', 'V', 'P'}
+# grammar = {
+    # 'S': [['NP', 'VP']],
+    # 'PP': [['P', 'NP']],
+    # 'VP': [['V', 'NP'], ['VP', 'PP']],
+    # 'NP': [['NP', 'PP'], ['N']],
+    # 'N': ['astronomers', 'ears', 'stars', 'telescopes'],
+    # 'V': ['saw'],
+    # 'P': ['with']
+# }
+# terminals = {'N', 'V', 'P'}
 
 words = ['astronomers', 'saw', 'stars', 'with', 'ears']
-earley = EarleyParser(grammar, terminals)
+
+from grammars import CFG
+
+cfg = CFG()
+cfg.init_grammar('englishcfg.txt', 'englishlexicon.txt')
+earley = EarleyParser(cfg.grammar, cfg.terminals)
+# earley.parse(['book', 'a', 'flight', 'with', 'me'])
+# earley.parse(['I', 'prefer', 'a', 'morning', 'flight'])
+# earley.parse(['I', 'book', 'a', 'flight', 'from', 'Houston', 'to', 'Alaska'])
+# earley.parse(['does', 'the', 'boy', 'sing'])
+# import json
+# print(json.dumps(cfg.grammar, indent=2))
+
+# earley = EarleyParser(grammar, terminals)
 earley.parse(words)
+forest = earley.forest()
+for tree, jsn in forest:
+    print("".join(tree))
+    print(json.dumps(jsn, indent=2))
+

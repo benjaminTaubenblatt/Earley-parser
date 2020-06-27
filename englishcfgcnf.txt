@@ -1,0 +1,17 @@
+S -> NP VP
+S -> X1 VP
+X1 -> Aux NP
+S -> Verb NP
+S -> X2 PP
+S -> Verb PP
+S -> VP PP
+NP -> Det Nominal
+Nominal -> Nominal Noun
+Nominal -> Nominal PP
+Nominal -> Noun
+VP -> Verb NP
+VP -> X2 PP
+X2 -> Verb NP
+VP -> VP PP
+VP -> VP PP
+PP -> Preposition NP
