@@ -1,7 +1,7 @@
-Det -> that | this | a
-Noun -> book | flight | meal | money
-Verb -> book | include | prefer
-Pronoun -> I | she | me
-Proper-Noun -> Houston | NWA
+Det -> that | this | a | an | these | the
+Noun -> book | flight | meal | money | breeze | trip | morning
+Verb -> book | include | prefer | is | like | need | want | fly
+Pronoun -> I | she | me | you | it | he
+Proper-Noun -> Houston | NWA | Alaska | Baltimore | Los Angeles | United
 Aux -> does
 Preposition -> with | from | to | on | near | through
