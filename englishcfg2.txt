@@ -1,0 +1,22 @@
+S -> NP VP
+S -> DP VP
+S -> VP
+DP -> D'
+D' -> Det
+D' -> Det NP
+NP -> N'
+N' -> N' PP
+N' -> Pronoun
+N' -> Proper-Noun
+N' -> N' PP
+N' -> Noun
+N' -> Adj N' 
+VP -> V'
+V' -> Verb
+V' -> V' PP
+V' -> Verb DP
+V' -> Verb PP
+V' -> Verb NP
+PP -> P'
+P' -> Preposition DP
+P' -> Preposition NP

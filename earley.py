@@ -1,4 +1,5 @@
 from typing import List, Iterator
+from grammars import CFG
 import json
 
 class State:
@@ -98,7 +99,6 @@ class EarleyParser:
     def completer(self, state: State, end_idx: int) -> None:
         j = state.position[0]
         k = state.position[1]
-        print(f"END INDEX: {end_idx}")
         for st in self.chart[j]:
             if (not st.complete() and 
                     st.next_category() == state.rule.lhs and
@@ -118,38 +118,30 @@ class EarleyParser:
                            position=[0, 0],
                            operation="seed"), 0)
         for k in range(len(words) + 1):
-            print(k)
             for state in self.chart[k]:
-                if not state.complete() and state.next_category() not in self.terminals: # non-terminal
+                if (not state.complete() and
+                        state.next_category() not in self.terminals): 
                         self.predictor(state)
-                        print(f"PREDICTOR: {state}")
-                        self.print_chart()
-                        print()
-                elif not state.complete() and state.next_category() in self.terminals and k != len(words):
-                    # terminal
+                elif (not state.complete() and 
+                      state.next_category() in self.terminals and 
+                      k != len(words)):
                     self.scanner(state, words)
-                    print(f"SCANNER: {state}")
-                    self.print_chart()
-                    print()
                 else: 
-                    # completer
                     self.completer(state, len(words))
-                    print(f"COMPLETER: {state}")
-                    self.print_chart()
-                    # return
+        self.print_chart()
 
     def forest(self):
         def find_children(state, current_tree, current_json):
-            current_tree.extend(['[ ', '.', state.rule.lhs])
+            current_tree.extend(['[', '.', state.rule.lhs, ' '])
             current_json[state.rule.lhs] = {}
             if state.rule.lhs in self.terminals:
-                current_tree.extend(['[ ', '.', state.rule.rhs[0], ' ]'])
+                current_tree.append(f'[."{state.rule.rhs[0]}"]')
                 current_json[state.rule.lhs] = state.rule.rhs[0]
             else:
                 for child in state.pointers:
                     #child = find_child(sid) 
                     find_children(child, current_tree, current_json[state.rule.lhs])
-                    current_tree.append(' ]')
+                    current_tree.append(']')
             
         parse_forest = []
         for st in self.chart[-1]:
@@ -162,14 +154,11 @@ class EarleyParser:
 
 
 
-
-
 """
-TODO: 
-    1. debug completor, dot rules, complete method, next category
-    2. improve parse forest retrieval 
-        a. multiple parses on same 'S' in last entry of chart?
-
+TODO:
+    1. implement shared parse forest?
+    2. fix infinite loop on malformed grammars
+    3. finalize show grammar
 """
 
 # grammar = {
@@ -182,23 +171,20 @@ TODO:
     # 'P': ['with']
 # }
 # terminals = {'N', 'V', 'P'}
+# words = ['the', 'astronomers', 'saw', 'stars', 'with', 'ears']
 
-words = ['astronomers', 'saw', 'stars', 'with', 'ears']
-
-from grammars import CFG
 
 cfg = CFG()
 cfg.init_grammar('englishcfg.txt', 'englishlexicon.txt')
 earley = EarleyParser(cfg.grammar, cfg.terminals)
 # earley.parse(['book', 'a', 'flight', 'with', 'me'])
-# earley.parse(['I', 'prefer', 'a', 'morning', 'flight'])
+earley.parse(['I', 'prefer', 'a', 'morning', 'flight'])
 # earley.parse(['I', 'book', 'a', 'flight', 'from', 'Houston', 'to', 'Alaska'])
 # earley.parse(['does', 'the', 'boy', 'sing'])
-# import json
 # print(json.dumps(cfg.grammar, indent=2))
 
 # earley = EarleyParser(grammar, terminals)
-earley.parse(words)
+# earley.parse(words)
 forest = earley.forest()
 for tree, jsn in forest:
     print("".join(tree))

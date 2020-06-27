@@ -3,6 +3,5 @@ Noun -> book | flight | meal | money | breeze | trip | morning | boy | astronome
 Verb -> book | include | prefer | is | like | need | want | fly | sing | saw
 Pronoun -> I | she | me | you | it | he
 Proper-Noun -> Houston | NWA | Alaska | Baltimore | Los Angeles | United
-Aux -> does
 Adj -> morning | pretty 
 Preposition -> with | from | to | on | near | through
