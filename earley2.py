@@ -79,7 +79,7 @@ class EarleyParser:
     def predictor(self, state: State) -> None:
         B = state.next_category()
         j = state.position[1]
-        for rhs in self.grammar.get(B, []): # TODO: change next category to not display "" and remove this
+        for rhs in self.grammar.get(B, [] ): # TODO: change next category to not display "" and remove this
             self.enqueue(State(rule=Rule(lhs=B, rhs=rhs),
                                dot_idx=0,
                                position=[j, j],
@@ -94,15 +94,16 @@ class EarleyParser:
                                dot_idx=1,
                                position=[j, j + 1],
                                operation="scanner"), j + 1)
-
-    def completer(self, state: State, end_idx) -> None:
+    
+    def completer(self, state: State, end_idx: int) -> None:
         j = state.position[0]
         k = state.position[1]
+        print(f"END INDEX: {end_idx}")
         for st in self.chart[j]:
             if (not st.complete() and 
                     st.next_category() == state.rule.lhs and
                     st.position[1] == j and st.rule.lhs != 'GAMMA' and
-                    len(st.rule.rhs) + st.position[1] <= end_idx + 1):
+                    len(state.rule.rhs) + st.position[1] <= end_idx):
                     i = st.position[0]
                     self.enqueue(State(rule=Rule(lhs=st.rule.lhs, rhs=st.rule.rhs),
                                        dot_idx=st.dot_idx + 1,
