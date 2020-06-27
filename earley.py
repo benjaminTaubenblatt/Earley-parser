@@ -1,4 +1,4 @@
-from typing import List, Iterator
+from typing import List, Dict, Set, Iterator
 from grammars import CFG
 import json
 
@@ -11,22 +11,17 @@ class State:
         self.pointers = pointers
         self.operation = operation
     
-
     def complete(self) -> bool:
-        # return (self.position[0] + len(self.rule.rhs)) == self.position[1]
         return self.dot_idx == len(self.rule.rhs) 
     
     def next_category(self) -> str:
-        # rule_idx = self.position[1] - self.position[0]
-        # if rule_idx < len(self.rule.rhs):
-            # return self.rule.rhs[rule_idx]
-        # return "" 
         return self.rule.rhs[self.dot_idx]
 
     def __str__(self) -> str:
         return (
             f"sid={self.sid}, rule={self.rule}, dot_idx={self.dot_idx}, "
-            f"position={self.position}, pointers={list(map(lambda s: s.sid, self.pointers))}, operation={self.operation}"
+            f"position={self.position}, pointers={list(map(lambda s: s.sid, self.pointers))}, "
+            f"operation={self.operation}"
         )
 
     def __eq__(self, other: 'State') -> bool:
@@ -36,7 +31,7 @@ class State:
 
 
 class Rule:
-    def __init__(self, lhs, rhs) -> None:
+    def __init__(self, lhs: str, rhs: List[str]) -> None:
         self.lhs = lhs
         self.rhs = rhs
 
@@ -48,7 +43,10 @@ class Rule:
 
 
 class EarleyParser:
-    def __init__(self, grammar, terminals) -> None:
+
+    GAMMA = 'GAMMA'
+
+    def __init__(self, grammar: Dict[str, List], terminals: Set[str]) -> None:
         self.chart = []
         self.grammar = grammar
         self.terminals = terminals
@@ -71,7 +69,6 @@ class EarleyParser:
             yield f"S{n}"
             n += 1
 
-
     def enqueue(self, state: State, k: int) -> None:
         if state not in self.chart[k]:
             state.sid = next(self.sid_gen)
@@ -80,7 +77,7 @@ class EarleyParser:
     def predictor(self, state: State) -> None:
         B = state.next_category()
         j = state.position[1]
-        for rhs in self.grammar.get(B, [] ): # TODO: change next category to not display "" and remove this
+        for rhs in self.grammar.get(B, []): 
             self.enqueue(State(rule=Rule(lhs=B, rhs=rhs),
                                dot_idx=0,
                                position=[j, j],
@@ -89,8 +86,7 @@ class EarleyParser:
     def scanner(self, state: State, words: List[str]) -> None:
         B = state.next_category()
         j = state.position[1]
-        if words[j] in self.grammar.get(B, []): # TODO: if word not in grammar?
-            # if input at pos k subset of POS for current terminal in rule
+        if words[j] in self.grammar.get(B, []): 
             self.enqueue(State(rule=Rule(lhs=B, rhs=[words[j]]),
                                dot_idx=1,
                                position=[j, j + 1],
@@ -113,7 +109,7 @@ class EarleyParser:
 
     def parse(self, words: List[str]) -> None:
         self.init_chart(words)
-        self.enqueue(State(rule=Rule('GAMMA', ['S']),
+        self.enqueue(State(rule=Rule(EarleyParser.GAMMA, ['S']),
                            dot_idx=0,
                            position=[0, 0],
                            operation="seed"), 0)
@@ -139,7 +135,6 @@ class EarleyParser:
                 current_json[state.rule.lhs] = state.rule.rhs[0]
             else:
                 for child in state.pointers:
-                    #child = find_child(sid) 
                     find_children(child, current_tree, current_json[state.rule.lhs])
                     current_tree.append(']')
             
@@ -171,20 +166,18 @@ TODO:
     # 'P': ['with']
 # }
 # terminals = {'N', 'V', 'P'}
-# words = ['the', 'astronomers', 'saw', 'stars', 'with', 'ears']
 
+# words = ['the', 'astronomers', 'saw', 'stars', 'with', 'ears']
+# words = ['I', 'book', 'a', 'flight', 'from', 'Houston', 'to', 'Alaska']
+# words = ['book', 'a', 'flight', 'with', 'me']
+words = ['I', 'prefer', 'a', 'morning', 'flight']
 
 cfg = CFG()
-cfg.init_grammar('englishcfg.txt', 'englishlexicon.txt')
+cfg.init_grammar(grammar_source='englishcfg.txt', lexicon_source='englishlexicon.txt')
 earley = EarleyParser(cfg.grammar, cfg.terminals)
-# earley.parse(['book', 'a', 'flight', 'with', 'me'])
-earley.parse(['I', 'prefer', 'a', 'morning', 'flight'])
-# earley.parse(['I', 'book', 'a', 'flight', 'from', 'Houston', 'to', 'Alaska'])
-# earley.parse(['does', 'the', 'boy', 'sing'])
-# print(json.dumps(cfg.grammar, indent=2))
+#earley = EarleyParser(grammar, terminals)
 
-# earley = EarleyParser(grammar, terminals)
-# earley.parse(words)
+earley.parse(words)
 forest = earley.forest()
 for tree, jsn in forest:
     print("".join(tree))
