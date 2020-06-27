@@ -1,6 +1,6 @@
 from typing import List, Dict, Set, Iterator
-from grammars import CFG
-import json
+# from grammars import CFG
+# import json
 
 class State:
     def __init__(self, rule, dot_idx, position, pointers=[], operation="") -> None:
@@ -155,31 +155,3 @@ TODO:
     2. fix infinite loop on malformed grammars
     3. finalize show grammar
 """
-
-# grammar = {
-    # 'S': [['NP', 'VP']],
-    # 'PP': [['P', 'NP']],
-    # 'VP': [['V', 'NP'], ['VP', 'PP']],
-    # 'NP': [['NP', 'PP'], ['N']],
-    # 'N': ['astronomers', 'ears', 'stars', 'telescopes'],
-    # 'V': ['saw'],
-    # 'P': ['with']
-# }
-# terminals = {'N', 'V', 'P'}
-
-# words = ['the', 'astronomers', 'saw', 'stars', 'with', 'ears']
-# words = ['I', 'book', 'a', 'flight', 'from', 'Houston', 'to', 'Alaska']
-# words = ['book', 'a', 'flight', 'with', 'me']
-words = ['I', 'prefer', 'a', 'morning', 'flight']
-
-cfg = CFG()
-cfg.init_grammar(grammar_source='englishcfg.txt', lexicon_source='englishlexicon.txt')
-earley = EarleyParser(cfg.grammar, cfg.terminals)
-#earley = EarleyParser(grammar, terminals)
-
-earley.parse(words)
-forest = earley.forest()
-for tree, jsn in forest:
-    print("".join(tree))
-    print(json.dumps(jsn, indent=2))
-
