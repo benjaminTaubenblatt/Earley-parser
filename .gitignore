@@ -1,3 +1,4 @@
 .vim
 .vscode
 test.py
+__pycache__
