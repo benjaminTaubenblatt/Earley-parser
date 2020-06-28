@@ -144,7 +144,11 @@ class EarleyParser:
                 current_tree = []
                 current_json = {} 
                 find_children(st, current_tree, current_json)
-                parse_forest.append((current_tree, current_json))
+                response = {
+                    'flat': ''.join(current_tree),
+                    'nested': current_json
+                }
+                parse_forest.append(response)
         return parse_forest
 
 
