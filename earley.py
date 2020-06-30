@@ -122,7 +122,6 @@ class EarleyParser:
                     self.scanner(state, words)
                 else: 
                     self.completer(state, len(words))
-        self.print_chart()
 
     def forest(self):
         def find_children(state, current_tree, current_json):
@@ -149,8 +148,28 @@ class EarleyParser:
                 parse_forest.append(response)
         return parse_forest
 
+    def forest_d3(self) -> List:
+        def find_children_d3(state, current_tree):
+            current_tree['name'] = state.rule.lhs
+            if state.rule.lhs in self.terminals:
+                current_tree['name'] = state.rule.lhs
+                current_tree['children'] = {
+                    'name': state.rule.rhs[0]
+                }
+            else:
+                current_tree['children'] = []
+                for i, child in enumerate(state.pointers):
+                    current_tree['children'].append({})
+                    find_children_d3(child, current_tree['children'][i])
 
-
+        parse_forest = []
+        for st in self.chart[-1]:
+            if st.rule.lhs == 'S':
+                current_tree = {}
+                find_children_d3(st, current_tree)
+                parse_forest.append(current_tree)
+        return parse_forest
+    
 """
 TODO:
     1. implement shared parse forest?
