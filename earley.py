@@ -1,6 +1,4 @@
 from typing import List, Dict, Set, Iterator
-# from grammars import CFG
-# import json
 
 class State:
     def __init__(self, rule, dot_idx, position, pointers=[], operation="") -> None:
