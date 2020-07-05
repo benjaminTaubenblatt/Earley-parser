@@ -23,13 +23,10 @@ def main():
     cfg = CFG()
     cfg.grammar_from_str(grammar_str=englishcfg, lexicon_str=englishlexicon)
     earley = EarleyParser(cfg.grammar, cfg.terminals)
-    #earley = EarleyParser(grammar, terminals)
 
     earley.parse(words)
-    forest = earley.forest()
-    for tree in forest:
-        print(''.join(tree['flat']))
-        print(json.dumps(tree['nested'], indent=2))
+    forest = earley.forest_d3()
+    print(json.dumps(forest, indent=2))
 
 
 
