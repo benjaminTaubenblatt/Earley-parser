@@ -3,28 +3,39 @@ englishcfg = """
     S -> VP
     NP -> Pronoun
     NP -> Proper-Noun
-    NP -> Aux NP
-    NP -> Det N'
-    NP -> N'
-    NP -> N' PP
-    N' -> Noun
-    N' -> Adj N'
+    NP -> Det NP
+    NP -> NP PP
+    NP -> Noun
+    NP -> Adj NP
     VP -> Verb
     VP -> Verb NP
     VP -> Verb PP
     VP -> VP PP
-    VP -> Aux VP
     PP -> Preposition NP
 """
 
 englishlexicon = """
-    Det -> that | this | a | an | these | the
-    Noun -> book | flight | meal | money | breeze | trip | morning | boy | astronomers | stars | ears
-    Verb -> book | include | prefer | is | like | need | want | fly | sing | saw
-    Pronoun -> I | she | me | you | it | he
-    Proper-Noun -> Houston | NWA | Alaska | Baltimore | Los Angeles | United
+    Det -> the | The | a | an | that | this | these
+    Noun -> flight | meal | money | breeze | trip | morning | child | astronomers | stars | telescopes
+    Verb -> book | ate | prefer | live | lives | is | like | need | want | flew | sing | saw
+    Pronoun -> I | me | You | you | They | they | It | it
+    Proper-Noun -> Montreal | Paris | Delta 
     Adj -> morning | pretty 
     Preposition -> with | from | to | on | near | through
+"""
+
+basicenglishcfg = """
+    S -> VP
+    NP -> Det NP
+    NP -> Noun
+    VP -> Verb
+    VP -> Verb NP
+"""
+
+basicenglishlexicon = """
+    Det -> that | the 
+    Noun -> flight | train 
+    Verb -> book | take 
 """
 
 englishcfg2 = """
@@ -50,24 +61,4 @@ englishcfg2 = """
     PP -> P'
     P' -> Preposition DP
     P' -> Preposition NP
-"""
-
-englishcfgcnf = """
-    S -> NP VP
-    S -> X1 VP
-    X1 -> Aux NP
-    S -> Verb NP
-    S -> X2 PP
-    S -> Verb PP
-    S -> VP PP
-    NP -> Det Nominal
-    Nominal -> Nominal Noun
-    Nominal -> Nominal PP
-    Nominal -> Noun
-    VP -> Verb NP
-    VP -> X2 PP
-    X2 -> Verb NP
-    VP -> VP PP
-    VP -> VP PP
-    PP -> Preposition NP
 """
