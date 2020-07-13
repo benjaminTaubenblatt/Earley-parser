@@ -1,4 +1,4 @@
-englishcfg = """
+englishcfgsimple = """
     S -> NP VP
     S -> VP
     NP -> Pronoun
@@ -7,6 +7,22 @@ englishcfg = """
     NP -> NP PP
     NP -> Noun
     NP -> Adj NP
+    VP -> Verb
+    VP -> Verb NP
+    VP -> Verb PP
+    VP -> VP PP
+    PP -> Preposition NP
+"""
+englishcfg = """
+    S -> NP VP
+    S -> VP
+    NP -> Nominal
+    NP -> Det Nominal 
+    Nominal -> Nominal PP
+    Nominal -> Noun
+    Nominal -> Pronoun
+    Nominal -> Proper-Noun
+    Nominal -> Adj Nominal 
     VP -> Verb
     VP -> Verb NP
     VP -> Verb PP
