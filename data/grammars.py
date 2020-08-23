@@ -41,17 +41,18 @@ englishlexicon = """
 """
 
 basicenglishcfg = """
+    S -> NP VP
     S -> VP
-    NP -> Det NP
     NP -> Noun
+    NP -> Det NP
     VP -> Verb
     VP -> Verb NP
 """
 
 basicenglishlexicon = """
+    Verb -> book | take | runs
     Det -> that | the 
-    Noun -> flight | train 
-    Verb -> book | take 
+    Noun -> flight | train | cat
 """
 
 englishcfg2 = """
