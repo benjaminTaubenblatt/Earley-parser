@@ -2,7 +2,7 @@ from typing import List, Dict, Set, Iterator
 
 class State:
     def __init__(self, rule, dot_idx, position, pointers=[], operation="") -> None:
-        # stores information about parses
+        # State stores information about parses
         self.sid = None 
         self.rule = rule
         self.dot_idx = dot_idx
@@ -15,7 +15,7 @@ class State:
         return self.dot_idx == len(self.rule.rhs) 
     
     def next_category(self) -> str:
-        # returns the next category of the rule based on the current state
+        # returns next category of rule based on current state
         return self.rule.rhs[self.dot_idx]
 
     def __str__(self) -> str:
@@ -34,7 +34,7 @@ class State:
 
 class Rule:
     def __init__(self, lhs: str, rhs: List[str]) -> None:
-        # a rule has an left hand side and a right hand side 
+        # Rule has a left hand side and a right hand side 
         self.lhs = lhs
         self.rhs = rhs
 
@@ -50,15 +50,15 @@ class EarleyParser:
     # start symbol
     GAMMA = 'GAMMA'
 
-    def __init__(self, grammar: Dict[str, List[str]], terminals: Set[str]) -> None:
-        # implements the algorithm and stores the chart, grammar, and terminals
+    def __init__(self, grammar: Dict[str, List], terminals: Set[str]) -> None:
+        # implements algorithm and stores chart, grammar, and terminals
         self.chart = []
         self.grammar = grammar
         self.terminals = terminals
         self.sid_gen = self.generate_sid()
 
     def init_chart(self, words: List[str]) -> None:
-        # initializes the chart based on the number of input words
+        # initializes chart based on number of input words
         for _ in range(len(words) + 1):
             self.chart.append([])
 
@@ -78,7 +78,7 @@ class EarleyParser:
             n += 1
 
     def enqueue(self, state: State, k: int) -> None:
-        # adds state with a new sid to the chart at position k 
+        # adds state with new sid to the chart at position k 
         if state not in self.chart[k]:
             state.sid = next(self.sid_gen)
             self.chart[k].append(state)
@@ -123,8 +123,8 @@ class EarleyParser:
                                        operation="completer"), k)
 
     def parse(self, words: List[str]) -> None:
-        # executes the DP algorithm by iterating over the input and state
-        # in the chart. Initiates chart and starts algorithm with start state GAMMA 
+        # executes DP algorithm by iterating over input and state in chart 
+        # initiates chart and starts algorithm with start state GAMMA 
         # performs predictor, scanner, or completer at each iteration
         self.init_chart(words)
         self.enqueue(State(rule=Rule(EarleyParser.GAMMA, ['S']),
